@@ -71,7 +71,7 @@ const sections = computed<Section[]>(() => {
     const [pageSlug, type, itemSlug] = parts
     if (!['stat', 'table', 'markdown'].includes(type)) continue
 
-    const tag: string | undefined = get.tags?.[0]
+    const tag: string | undefined = get.tags?.[0] || undefined
 
     if (!pages.has(pageSlug)) {
       pageOrder.push(pageSlug)
@@ -115,14 +115,11 @@ const sections = computed<Section[]>(() => {
     sectionMap.get(tag)!.push(page)
   }
 
-  // Default section (undefined tag) first
-  sectionTagOrder.sort((a, b) => {
-    if (a === undefined) return -1
-    if (b === undefined) return 1
-    return 0
-  })
+  // Untagged section first, then tagged sections in insertion order
+  const untagged = sectionTagOrder.filter(t => !t)
+  const tagged = sectionTagOrder.filter(t => !!t)
 
-  return sectionTagOrder.map(tag => ({
+  return [...untagged, ...tagged].map(tag => ({
     title: tag,
     pages: sectionMap.get(tag)!,
   }))
