@@ -22,7 +22,7 @@ const page = computed(() => getPage(pageSlug.value))
     <header class="flex items-center gap-3 h-14 border-b border-border px-4 bg-background sticky top-0 z-10">
       <SidebarTrigger class="text-muted-foreground hover:text-foreground" />
       <Separator orientation="vertical" class="h-4" />
-      <span class="text-sm font-medium text-foreground">
+      <span class="text-base font-medium text-foreground">
         {{ page?.title ?? pageSlug }}
       </span>
     </header>
@@ -31,12 +31,12 @@ const page = computed(() => getPage(pageSlug.value))
     <main class="flex-1 p-6 flex flex-col gap-8">
 
       <!-- Spec loading state -->
-      <div v-if="loading && !page" class="text-sm text-muted-foreground">
+      <div v-if="loading && !page" class="text-base text-muted-foreground">
         Loading…
       </div>
 
       <!-- Page not found -->
-      <div v-else-if="!page" class="text-sm text-muted-foreground">
+      <div v-else-if="!page" class="text-base text-muted-foreground">
         Page not found: {{ pageSlug }}
       </div>
 
@@ -70,7 +70,7 @@ const page = computed(() => getPage(pageSlug.value))
         <div v-if="page.tables.length">
           <!-- Single table — no tabs -->
           <template v-if="page.tables.length === 1">
-            <h2 class="text-sm font-medium text-foreground mb-3">
+            <h2 class="text-base font-medium text-foreground mb-3">
               {{ page.tables[0].summary }}
             </h2>
             <DataTable :endpoint="page.tables[0]" />

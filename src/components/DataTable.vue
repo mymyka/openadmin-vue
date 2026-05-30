@@ -57,7 +57,7 @@ function formatCell(v: string | number | boolean | undefined): string {
             v-else
             v-for="h in headers"
             :key="h"
-            class="text-[11px] font-medium tracking-[0.08em] uppercase text-muted-foreground py-3"
+            class="text-[12.5px] font-medium tracking-[0.08em] uppercase text-muted-foreground py-3"
           >
             {{ formatHeader(h) }}
           </TableHead>
@@ -74,7 +74,7 @@ function formatCell(v: string | number | boolean | undefined): string {
 
         <template v-else-if="hasError">
           <TableRow>
-            <TableCell :colspan="Math.max(headers.length, 1)" class="py-8 text-center text-muted-foreground text-sm">
+            <TableCell :colspan="Math.max(headers.length, 1)" class="py-8 text-center text-muted-foreground text-base">
               Failed to load data
             </TableCell>
           </TableRow>
@@ -82,7 +82,7 @@ function formatCell(v: string | number | boolean | undefined): string {
 
         <template v-else-if="rows.length === 0">
           <TableRow>
-            <TableCell :colspan="Math.max(headers.length, 1)" class="py-8 text-center text-muted-foreground text-sm">
+            <TableCell :colspan="Math.max(headers.length, 1)" class="py-8 text-center text-muted-foreground text-base">
               No data available
             </TableCell>
           </TableRow>
@@ -97,7 +97,7 @@ function formatCell(v: string | number | boolean | undefined): string {
             <TableCell
               v-for="h in headers"
               :key="h"
-              class="py-3 text-sm text-foreground"
+              class="py-3 text-base text-foreground"
             >
               {{ formatCell(row[h]) }}
             </TableCell>

@@ -47,7 +47,7 @@ function navigate(slug: string) {
               stroke-linecap="round"
             />
           </svg>
-          <span class="text-sm font-semibold text-sidebar-primary-foreground tracking-tight">
+          <span class="text-base font-semibold text-sidebar-primary-foreground tracking-tight">
             OpenAdmin
           </span>
         </div>

@@ -33,7 +33,7 @@ function displayValue(v: string | number | boolean | null): string {
 <template>
   <Card class="bg-card border-border">
     <CardHeader class="pb-2 pt-5 px-5">
-      <p class="text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground">
+      <p class="text-[12.5px] font-medium tracking-[0.12em] uppercase text-muted-foreground">
         {{ endpoint.summary }}
       </p>
     </CardHeader>
@@ -46,7 +46,7 @@ function displayValue(v: string | number | boolean | null): string {
       >
         {{ hasError ? 'Error' : displayValue(value) }}
       </p>
-      <p v-if="endpoint.description" class="mt-1.5 text-xs text-muted-foreground leading-snug">
+      <p v-if="endpoint.description" class="mt-1.5 text-sm text-muted-foreground leading-snug">
         {{ endpoint.description }}
       </p>
     </CardContent>
