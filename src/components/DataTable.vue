@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
@@ -7,6 +7,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { useOpenApi } from '@/composables/useOpenApi'
 import type { EndpointInfo } from '@/composables/useOpenApi'
 import {
@@ -22,7 +23,7 @@ import {
   DialogTitle,
   DialogClose,
 } from 'reka-ui'
-import { EllipsisVertical, ChevronLeft, ChevronRight } from '@lucide/vue'
+import { EllipsisVertical, ChevronLeft, ChevronRight, File } from '@lucide/vue'
 
 interface Action {
   color: string
@@ -117,6 +118,34 @@ function formatCell(v: unknown): string {
   if (v === undefined || v === null) return '—'
   if (typeof v === 'boolean') return v ? 'Yes' : 'No'
   return String(v)
+}
+
+type CellDisplayType = 'text' | 'image' | 'file' | 'loading'
+const urlTypeCache = reactive<Record<string, 'image' | 'file' | 'loading'>>({})
+
+async function fetchUrlType(url: string) {
+  urlTypeCache[url] = 'loading'
+  try {
+    const resp = await fetch(url, { method: 'HEAD' })
+    const ct = resp.headers.get('content-type') ?? ''
+    urlTypeCache[url] = ct.startsWith('image/') ? 'image' : 'file'
+  } catch {
+    urlTypeCache[url] = 'file'
+  }
+}
+
+function getCellType(v: unknown): CellDisplayType {
+  if (typeof v !== 'string') return 'text'
+  if (!v.startsWith('http://') && !v.startsWith('https://')) return 'text'
+  const path = v.split('?')[0].split('#')[0]
+  if (/\.(jpg|jpeg|png|gif|webp|svg|bmp|ico|avif)$/i.test(path)) return 'image'
+  if (/\.[a-z0-9]{1,6}$/i.test(path)) return 'file'
+  if (!(v in urlTypeCache)) fetchUrlType(v)
+  return urlTypeCache[v] ?? 'loading'
+}
+
+function fileLabel(url: string): string {
+  return url.split('/').at(-1)?.split('?')[0] || 'File'
 }
 
 function rowActions(row: Record<string, unknown>): Action[] {
@@ -214,7 +243,29 @@ async function runAction(action: Action, rowKey: string) {
               :key="h"
               class="py-3 text-sm text-foreground"
             >
-              {{ formatCell(row[h]) }}
+              <template v-if="getCellType(row[h]) === 'image'">
+                <Avatar class="size-8">
+                  <AvatarImage :src="String(row[h])" :alt="h" />
+                  <AvatarFallback class="text-xs">?</AvatarFallback>
+                </Avatar>
+              </template>
+              <a
+                v-else-if="getCellType(row[h]) === 'file'"
+                :href="String(row[h])"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 text-primary hover:underline"
+              >
+                <File class="size-3.5 shrink-0" />
+                <span class="truncate max-w-[200px]">{{ fileLabel(String(row[h])) }}</span>
+              </a>
+              <Skeleton
+                v-else-if="getCellType(row[h]) === 'loading'"
+                class="size-8 rounded-full bg-muted-foreground/20"
+              />
+              <template v-else>
+                {{ formatCell(row[h]) }}
+              </template>
             </TableCell>
 
             <TableCell v-if="hasActions" class="py-2 w-10 text-right pr-3">
