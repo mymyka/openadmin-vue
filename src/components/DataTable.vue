@@ -4,6 +4,8 @@ import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOpenApi } from '@/composables/useOpenApi'
 import type { EndpointInfo } from '@/composables/useOpenApi'
@@ -13,8 +15,14 @@ import {
   DropdownMenuPortal,
   DropdownMenuContent,
   DropdownMenuItem,
+  DialogRoot,
+  DialogPortal,
+  DialogOverlay,
+  DialogContent,
+  DialogTitle,
+  DialogClose,
 } from 'reka-ui'
-import { EllipsisVertical } from '@lucide/vue'
+import { EllipsisVertical, ChevronLeft, ChevronRight } from '@lucide/vue'
 
 interface Action {
   color: string
@@ -29,6 +37,25 @@ const { fetchEndpoint } = useOpenApi()
 const rows = ref<Record<string, unknown>[]>([])
 const isLoading = ref(true)
 const hasError = ref(false)
+const page = ref(0)
+const perPage = ref(10)
+const isLastPage = ref(false)
+
+const settingsOpen = ref(false)
+const perPageDraft = ref(10)
+
+function openSettings() {
+  perPageDraft.value = perPage.value
+  settingsOpen.value = true
+}
+
+function applySettings() {
+  const v = Math.max(1, Math.floor(perPageDraft.value))
+  perPage.value = v
+  page.value = 0
+  settingsOpen.value = false
+  loadPage(0)
+}
 
 const dataHeaders = computed(() =>
   rows.value.length ? Object.keys(rows.value[0]).filter(k => k !== '__actions__') : []
@@ -40,16 +67,38 @@ const hasActions = computed(() =>
 
 const totalCols = computed(() => dataHeaders.value.length + (hasActions.value ? 1 : 0))
 
-onMounted(async () => {
+async function loadPage(p: number) {
+  isLoading.value = true
+  hasError.value = false
   try {
-    const data = await fetchEndpoint(props.endpoint.path)
+    const params = props.endpoint.paginated ? { page: p, per_page: perPage.value } : undefined
+    const data = await fetchEndpoint(props.endpoint.path, params)
     rows.value = data.data ?? []
+    if (props.endpoint.paginated) {
+      isLastPage.value = rows.value.length < perPage.value
+    }
   } catch {
     hasError.value = true
   } finally {
     isLoading.value = false
   }
-})
+}
+
+onMounted(() => loadPage(0))
+
+function prevPage() {
+  if (page.value > 0) {
+    page.value--
+    loadPage(page.value)
+  }
+}
+
+function nextPage() {
+  if (!isLastPage.value) {
+    page.value++
+    loadPage(page.value)
+  }
+}
 
 function formatHeader(key: string): string {
   return key.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -195,5 +244,52 @@ async function runAction(action: Action, rowKey: string) {
         </template>
       </TableBody>
     </Table>
+    <div
+      v-if="endpoint.paginated && !isLoading && !hasError"
+      class="flex items-center justify-between px-4 py-2 border-t border-border bg-muted/30"
+    >
+      <div class="flex items-center gap-2">
+        <Button variant="ghost" size="icon" class="h-7 w-7" @click="openSettings">
+          <EllipsisVertical class="w-4 h-4" />
+        </Button>
+        <span class="text-xs text-muted-foreground">Page {{ page + 1 }}</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <Button variant="ghost" size="icon" class="h-7 w-7" :disabled="page === 0" @click="prevPage">
+          <ChevronLeft class="w-4 h-4" />
+        </Button>
+        <Button variant="ghost" size="icon" class="h-7 w-7" :disabled="isLastPage" @click="nextPage">
+          <ChevronRight class="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
   </div>
+
+  <DialogRoot v-model:open="settingsOpen">
+    <DialogPortal>
+      <DialogOverlay class="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+      <DialogContent class="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-card p-6 shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
+        <DialogTitle class="text-sm font-semibold text-foreground mb-4">Table Settings</DialogTitle>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs text-muted-foreground font-medium mb-1.5 block">Rows per page</label>
+            <Input
+              v-model="perPageDraft"
+              type="number"
+              min="1"
+              max="200"
+              class="h-8 text-sm"
+              @keydown.enter="applySettings"
+            />
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-5">
+          <DialogClose as-child>
+            <Button variant="ghost" size="sm">Cancel</Button>
+          </DialogClose>
+          <Button size="sm" @click="applySettings">Apply</Button>
+        </div>
+      </DialogContent>
+    </DialogPortal>
+  </DialogRoot>
 </template>

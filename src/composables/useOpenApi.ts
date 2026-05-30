@@ -8,6 +8,7 @@ export interface EndpointInfo {
   summary: string
   description?: string
   tag?: string
+  paginated?: boolean
 }
 
 export interface Page {
@@ -86,6 +87,9 @@ const sections = computed<Section[]>(() => {
     }
 
     const page = pages.get(pageSlug)!
+    const params: any[] = get.parameters ?? []
+    const paginated = params.some((p: any) => p.name === 'page' && p.in === 'query')
+
     const endpoint: EndpointInfo = {
       path,
       pageSlug,
@@ -94,6 +98,7 @@ const sections = computed<Section[]>(() => {
       summary: get.summary || slugToTitle(itemSlug),
       description: get.description,
       tag,
+      paginated,
     }
 
     if (type === 'stat') page.stats.push(endpoint)
@@ -129,8 +134,12 @@ const allPages = computed<Page[]>(() =>
   sections.value.flatMap(s => s.pages)
 )
 
-async function fetchEndpoint(path: string): Promise<any> {
-  const res = await fetch(`/admin${path}`)
+async function fetchEndpoint(path: string, params?: Record<string, string | number>): Promise<any> {
+  const url = new URL(`/admin${path}`, location.origin)
+  if (params) {
+    for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v))
+  }
+  const res = await fetch(url.toString())
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
 }
