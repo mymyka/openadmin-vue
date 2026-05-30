@@ -140,6 +140,9 @@ async function runAction(action: Action, rowKey: string) {
         body: JSON.stringify(action.body),
       } : {}),
     })
+    const scrollY = window.scrollY
+    await loadPage(page.value)
+    window.scrollTo({ top: scrollY, behavior: 'instant' })
   } finally {
     loadingRow.value = null
   }
