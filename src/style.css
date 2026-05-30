@@ -98,6 +98,20 @@
   }
 }
 
+/* Page transition */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
 /* Markdown prose styles */
 .admin-prose {
   color: #3d3d3a;
