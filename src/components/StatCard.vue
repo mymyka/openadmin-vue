@@ -10,13 +10,15 @@ const { fetchEndpoint } = useOpenApi()
 const value = ref<string | number | boolean | null>(null)
 const isLoading = ref(true)
 const hasError = ref(false)
+const errorMessage = ref<string | null>(null)
 
 onMounted(async () => {
   try {
     const data = await fetchEndpoint(props.endpoint.path)
     value.value = data.value ?? null
-  } catch {
+  } catch (e) {
     hasError.value = true
+    errorMessage.value = e instanceof Error ? e.message : null
   } finally {
     isLoading.value = false
   }
@@ -37,11 +39,13 @@ function displayValue(v: string | number | boolean | null): string {
     <div>
       <Skeleton v-if="isLoading" class="h-9 w-28 bg-muted" />
       <p
-        v-else
+        v-else-if="!hasError"
         class="text-[2rem] font-normal leading-none tracking-tight text-foreground font-mono"
-        :class="{ 'text-destructive': hasError }"
       >
-        {{ hasError ? 'Error' : displayValue(value) }}
+        {{ displayValue(value) }}
+      </p>
+      <p v-else-if="errorMessage" class="text-xs text-destructive/80 mt-1 font-mono">
+        {{ errorMessage }}
       </p>
     </div>
     <p v-if="endpoint.description" class="text-sm text-muted-foreground leading-snug">

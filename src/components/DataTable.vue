@@ -38,6 +38,7 @@ const rows = ref<Record<string, unknown>[]>([])
 const isLoading = ref(true)
 const isFirstLoad = ref(true)
 const hasError = ref(false)
+const errorMessage = ref<string | null>(null)
 const page = ref(0)
 const perPage = ref(10)
 const isLastPage = ref(false)
@@ -78,8 +79,9 @@ async function loadPage(p: number) {
     if (props.endpoint.paginated) {
       isLastPage.value = rows.value.length < perPage.value
     }
-  } catch {
+  } catch (e) {
     hasError.value = true
+    errorMessage.value = e instanceof Error ? e.message : null
   } finally {
     isLoading.value = false
     isFirstLoad.value = false
@@ -152,7 +154,7 @@ async function runAction(action: Action, rowKey: string) {
 </script>
 
 <template>
-  <div class="rounded-lg border border-border overflow-hidden bg-card">
+  <div class="rounded-lg border overflow-hidden transition-colors" :class="hasError ? 'border-destructive/40 bg-destructive/5' : 'border-border bg-card'">
     <Table>
       <TableHeader>
         <TableRow class="border-border bg-muted hover:bg-muted">
@@ -188,7 +190,7 @@ async function runAction(action: Action, rowKey: string) {
         <template v-else-if="hasError">
           <TableRow>
             <TableCell :colspan="Math.max(totalCols, 1)" class="py-8 text-center text-muted-foreground text-sm">
-              Failed to load data
+              {{ errorMessage ?? 'Failed to load data' }}
             </TableCell>
           </TableRow>
         </template>

@@ -140,7 +140,17 @@ async function fetchEndpoint(path: string, params?: Record<string, string | numb
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v))
   }
   const res = await fetch(url.toString())
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  if (!res.ok) {
+    let detail: string | undefined
+    try {
+      const body = await res.json()
+      detail = typeof body?.detail === 'string' ? body.detail
+        : typeof body?.message === 'string' ? body.message
+        : typeof body?.error === 'string' ? body.error
+        : undefined
+    } catch {}
+    throw new Error(detail ?? `HTTP ${res.status}`)
+  }
   return res.json()
 }
 
