@@ -36,6 +36,7 @@ const props = defineProps<{ endpoint: EndpointInfo }>()
 const { fetchEndpoint } = useOpenApi()
 const rows = ref<Record<string, unknown>[]>([])
 const isLoading = ref(true)
+const isFirstLoad = ref(true)
 const hasError = ref(false)
 const page = ref(0)
 const perPage = ref(10)
@@ -81,6 +82,7 @@ async function loadPage(p: number) {
     hasError.value = true
   } finally {
     isLoading.value = false
+    isFirstLoad.value = false
   }
 }
 
@@ -154,7 +156,7 @@ async function runAction(action: Action, rowKey: string) {
     <Table>
       <TableHeader>
         <TableRow class="border-border bg-muted hover:bg-muted">
-          <template v-if="isLoading">
+          <template v-if="isLoading && isFirstLoad">
             <TableHead v-for="i in 4" :key="i" class="py-3">
               <Skeleton class="h-3.5 w-20 bg-muted-foreground/20" />
             </TableHead>
@@ -174,8 +176,8 @@ async function runAction(action: Action, rowKey: string) {
           </template>
         </TableRow>
       </TableHeader>
-      <TableBody>
-        <template v-if="isLoading">
+      <TableBody :class="{ 'opacity-40 pointer-events-none': isLoading && !isFirstLoad, 'transition-opacity duration-200': !isFirstLoad }">
+        <template v-if="isLoading && isFirstLoad">
           <TableRow v-for="i in 6" :key="i" class="border-border">
             <TableCell v-for="j in 4" :key="j" class="py-3">
               <Skeleton class="h-4 w-full bg-muted-foreground/20" />
@@ -248,7 +250,7 @@ async function runAction(action: Action, rowKey: string) {
       </TableBody>
     </Table>
     <div
-      v-if="endpoint.paginated && !isLoading && !hasError"
+      v-if="endpoint.paginated && !isFirstLoad && !hasError"
       class="flex items-center justify-between px-4 py-2 border-t border-border bg-muted/30"
     >
       <div class="flex items-center gap-2">
