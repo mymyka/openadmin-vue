@@ -56,7 +56,7 @@ function formatHeader(key: string): string {
 }
 
 function actionLabel(action: Action): string {
-  const slug = action.url.split('/').at(-1) ?? action.url
+  const slug = (action.url.split('/').at(-1) ?? action.url).split('?')[0]
   return formatHeader(slug)
 }
 
