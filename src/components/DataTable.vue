@@ -44,20 +44,20 @@ function formatCell(v: string | number | boolean | undefined): string {
 </script>
 
 <template>
-  <div class="rounded-lg border border-border overflow-hidden bg-background">
+  <div class="rounded-lg border border-border overflow-hidden bg-card">
     <Table>
       <TableHeader>
-        <TableRow class="border-border bg-muted/40 hover:bg-muted/40">
+        <TableRow class="border-border bg-muted hover:bg-muted">
           <template v-if="isLoading">
             <TableHead v-for="i in 4" :key="i" class="py-3">
-              <Skeleton class="h-3.5 w-20" />
+              <Skeleton class="h-3.5 w-20 bg-muted-foreground/20" />
             </TableHead>
           </template>
           <TableHead
             v-else
             v-for="h in headers"
             :key="h"
-            class="text-[12.5px] font-medium tracking-[0.08em] uppercase text-muted-foreground py-3"
+            class="text-[11px] font-semibold tracking-[0.1em] uppercase text-muted-foreground py-3 font-mono"
           >
             {{ formatHeader(h) }}
           </TableHead>
@@ -67,14 +67,14 @@ function formatCell(v: string | number | boolean | undefined): string {
         <template v-if="isLoading">
           <TableRow v-for="i in 6" :key="i" class="border-border">
             <TableCell v-for="j in 4" :key="j" class="py-3">
-              <Skeleton class="h-4 w-full" />
+              <Skeleton class="h-4 w-full bg-muted-foreground/20" />
             </TableCell>
           </TableRow>
         </template>
 
         <template v-else-if="hasError">
           <TableRow>
-            <TableCell :colspan="Math.max(headers.length, 1)" class="py-8 text-center text-muted-foreground text-base">
+            <TableCell :colspan="Math.max(headers.length, 1)" class="py-8 text-center text-muted-foreground text-sm">
               Failed to load data
             </TableCell>
           </TableRow>
@@ -82,7 +82,7 @@ function formatCell(v: string | number | boolean | undefined): string {
 
         <template v-else-if="rows.length === 0">
           <TableRow>
-            <TableCell :colspan="Math.max(headers.length, 1)" class="py-8 text-center text-muted-foreground text-base">
+            <TableCell :colspan="Math.max(headers.length, 1)" class="py-8 text-center text-muted-foreground text-sm">
               No data available
             </TableCell>
           </TableRow>
@@ -92,12 +92,12 @@ function formatCell(v: string | number | boolean | undefined): string {
           <TableRow
             v-for="(row, i) in rows"
             :key="i"
-            class="border-border"
+            class="border-border hover:bg-muted/60 transition-colors"
           >
             <TableCell
               v-for="h in headers"
               :key="h"
-              class="py-3 text-base text-foreground"
+              class="py-3 text-sm text-foreground"
             >
               {{ formatCell(row[h]) }}
             </TableCell>

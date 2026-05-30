@@ -42,7 +42,7 @@ function navigate(slug: string) {
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" class="shrink-0">
             <path
               d="M9 1v16M1 9h16M2.636 2.636l12.728 12.728M15.364 2.636 2.636 15.364"
-              stroke="#cc785c"
+              stroke="#00d992"
               stroke-width="1.75"
               stroke-linecap="round"
             />

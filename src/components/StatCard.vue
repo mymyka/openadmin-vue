@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOpenApi } from '@/composables/useOpenApi'
 import type { EndpointInfo } from '@/composables/useOpenApi'
@@ -31,24 +30,22 @@ function displayValue(v: string | number | boolean | null): string {
 </script>
 
 <template>
-  <Card class="bg-card border-border">
-    <CardHeader class="pb-2 pt-5 px-5">
-      <p class="text-[12.5px] font-medium tracking-[0.12em] uppercase text-muted-foreground">
-        {{ endpoint.summary }}
-      </p>
-    </CardHeader>
-    <CardContent class="px-5 pb-5">
-      <Skeleton v-if="isLoading" class="h-9 w-28" />
+  <div class="rounded-lg border border-border bg-card p-6 flex flex-col gap-3">
+    <p class="text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground font-mono">
+      {{ endpoint.summary }}
+    </p>
+    <div>
+      <Skeleton v-if="isLoading" class="h-9 w-28 bg-muted" />
       <p
         v-else
-        class="text-[2rem] font-normal leading-none tracking-tight text-foreground"
+        class="text-[2rem] font-normal leading-none tracking-tight text-foreground font-mono"
         :class="{ 'text-destructive': hasError }"
       >
         {{ hasError ? 'Error' : displayValue(value) }}
       </p>
-      <p v-if="endpoint.description" class="mt-1.5 text-sm text-muted-foreground leading-snug">
-        {{ endpoint.description }}
-      </p>
-    </CardContent>
-  </Card>
+    </div>
+    <p v-if="endpoint.description" class="text-sm text-muted-foreground leading-snug">
+      {{ endpoint.description }}
+    </p>
+  </div>
 </template>

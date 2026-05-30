@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
@@ -21,8 +21,8 @@ const page = computed(() => getPage(pageSlug.value))
     <!-- Header bar -->
     <header class="flex items-center gap-3 h-14 border-b border-border px-4 bg-background sticky top-0 z-10">
       <SidebarTrigger class="text-muted-foreground hover:text-foreground" />
-      <Separator orientation="vertical" class="h-4" />
-      <span class="text-base font-medium text-foreground">
+      <Separator orientation="vertical" class="h-4 bg-border" />
+      <span class="text-sm font-medium text-foreground tracking-tight">
         {{ page?.title ?? pageSlug }}
       </span>
     </header>
@@ -31,17 +31,17 @@ const page = computed(() => getPage(pageSlug.value))
     <main class="flex-1 p-6 flex flex-col gap-8">
 
       <!-- Spec loading state -->
-      <div v-if="loading && !page" class="text-base text-muted-foreground">
+      <div v-if="loading && !page" class="text-sm text-muted-foreground font-mono">
         Loading…
       </div>
 
       <!-- Page not found -->
-      <div v-else-if="!page" class="text-base text-muted-foreground">
+      <div v-else-if="!page" class="text-sm text-muted-foreground font-mono">
         Page not found: {{ pageSlug }}
       </div>
 
       <template v-else>
-        <!-- Markdown blocks (overview / description) -->
+        <!-- Markdown blocks -->
         <MarkdownBlock
           v-for="md in page.markdowns"
           :key="md.path"
@@ -70,7 +70,7 @@ const page = computed(() => getPage(pageSlug.value))
         <div v-if="page.tables.length">
           <!-- Single table — no tabs -->
           <template v-if="page.tables.length === 1">
-            <h2 class="text-base font-medium text-foreground mb-3">
+            <h2 class="text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground font-mono mb-3">
               {{ page.tables[0].summary }}
             </h2>
             <DataTable :endpoint="page.tables[0]" />
@@ -79,15 +79,16 @@ const page = computed(() => getPage(pageSlug.value))
           <!-- Multiple tables — tabbed -->
           <Tabs v-else :key="pageSlug" :default-value="page.tables[0].itemSlug">
             <div class="flex justify-center mb-4">
-            <TabsList>
-              <TabsTrigger
-                v-for="table in page.tables"
-                :key="table.itemSlug"
-                :value="table.itemSlug"
-              >
-                {{ table.summary }}
-              </TabsTrigger>
-            </TabsList>
+              <TabsList class="bg-muted border border-border">
+                <TabsTrigger
+                  v-for="table in page.tables"
+                  :key="table.itemSlug"
+                  :value="table.itemSlug"
+                  class="text-muted-foreground data-[state=active]:text-foreground data-[state=active]:bg-background"
+                >
+                  {{ table.summary }}
+                </TabsTrigger>
+              </TabsList>
             </div>
             <TabsContent
               v-for="table in page.tables"
