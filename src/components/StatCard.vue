@@ -30,7 +30,7 @@ function displayValue(v: string | number | boolean | null): string {
 </script>
 
 <template>
-  <div class="rounded-lg border border-border bg-card p-6 flex flex-col gap-3">
+  <div class="rounded-lg border p-6 flex flex-col gap-3 transition-colors" :class="hasError ? 'border-destructive/40 bg-destructive/5' : 'border-border bg-card'">
     <p class="text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground font-mono">
       {{ endpoint.summary }}
     </p>
