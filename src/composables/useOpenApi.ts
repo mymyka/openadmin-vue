@@ -11,6 +11,24 @@ export interface EndpointInfo {
   paginated?: boolean
 }
 
+export interface FormField {
+  name: string
+  type: string
+  enum?: string[]
+  default?: unknown
+  required: boolean
+  title: string
+}
+
+export interface FormEndpointInfo {
+  path: string
+  pageSlug: string
+  method: string
+  summary: string
+  description?: string
+  fields: FormField[]
+}
+
 export interface Page {
   slug: string
   title: string
@@ -18,6 +36,7 @@ export interface Page {
   stats: EndpointInfo[]
   tables: EndpointInfo[]
   markdowns: EndpointInfo[]
+  forms: FormEndpointInfo[]
 }
 
 export interface Section {
@@ -30,6 +49,13 @@ function slugToTitle(slug: string): string {
     .split('-')
     .map(w => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ')
+}
+
+function resolveRef(ref: string, spec: any): any {
+  const parts = ref.replace(/^#\//, '').split('/')
+  let curr = spec
+  for (const part of parts) curr = curr?.[part]
+  return curr
 }
 
 // Singleton state shared across all composable instances
@@ -83,6 +109,7 @@ const sections = computed<Section[]>(() => {
         stats: [],
         tables: [],
         markdowns: [],
+        forms: [],
       })
     }
 
@@ -104,6 +131,70 @@ const sections = computed<Section[]>(() => {
     if (type === 'stat') page.stats.push(endpoint)
     else if (type === 'table') page.tables.push(endpoint)
     else page.markdowns.push(endpoint)
+  }
+
+  // Second pass: form endpoints (skip hidden)
+  for (const [path, pathItem] of Object.entries<any>(spec.value.paths ?? {})) {
+    if (path.includes('__hide__')) continue
+
+    const parts = path.replace(/^\//, '').split('/')
+    if (parts.length < 3) continue
+
+    const [pageSlug, type] = parts
+    if (type !== 'form') continue
+
+    const itemSlug = parts[parts.length - 1]
+
+    let methodKey: string | null = null
+    let operation: any = null
+    for (const m of ['post', 'put', 'patch']) {
+      if (pathItem?.[m]?.requestBody) {
+        methodKey = m.toUpperCase()
+        operation = pathItem[m]
+        break
+      }
+    }
+    if (!operation) continue
+
+    const bodySchema = operation.requestBody?.content?.['application/json']?.schema
+    if (!bodySchema) continue
+
+    const resolvedSchema = bodySchema.$ref ? resolveRef(bodySchema.$ref, spec.value) : bodySchema
+    if (!resolvedSchema?.properties) continue
+
+    const required: string[] = resolvedSchema.required ?? []
+    const fields: FormField[] = Object.entries<any>(resolvedSchema.properties).map(([name, prop]) => ({
+      name,
+      type: prop.type ?? 'string',
+      enum: prop.enum,
+      default: prop.default,
+      required: required.includes(name),
+      title: prop.title ?? slugToTitle(name),
+    }))
+
+    const tag: string | undefined = operation.tags?.[0] || undefined
+
+    if (!pages.has(pageSlug)) {
+      pageOrder.push(pageSlug)
+      pages.set(pageSlug, {
+        slug: pageSlug,
+        title: slugToTitle(pageSlug),
+        tag,
+        stats: [],
+        tables: [],
+        markdowns: [],
+        forms: [],
+      })
+    }
+
+    pages.get(pageSlug)!.forms.push({
+      path,
+      pageSlug,
+      method: methodKey!,
+      summary: operation.summary || slugToTitle(itemSlug),
+      description: operation.description,
+      fields,
+    })
   }
 
   // Group pages into sections, preserving insertion order

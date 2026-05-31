@@ -7,6 +7,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import StatCard from '@/components/StatCard.vue'
 import DataTable from '@/components/DataTable.vue'
 import MarkdownBlock from '@/components/MarkdownBlock.vue'
+import FormDialog from '@/components/FormDialog.vue'
 import { useOpenApi } from '@/composables/useOpenApi'
 
 const route = useRoute()
@@ -25,6 +26,13 @@ const page = computed(() => getPage(pageSlug.value))
       <span class="text-sm font-medium text-foreground tracking-tight">
         {{ page?.title ?? pageSlug }}
       </span>
+      <div v-if="page?.forms.length" class="ml-auto flex items-center gap-2">
+        <FormDialog
+          v-for="form in page.forms"
+          :key="form.path"
+          :form="form"
+        />
+      </div>
     </header>
 
     <!-- Page content -->
