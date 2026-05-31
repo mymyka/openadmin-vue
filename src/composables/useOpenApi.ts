@@ -9,6 +9,7 @@ export interface EndpointInfo {
   description?: string
   tag?: string
   paginated?: boolean
+  searchable?: boolean
 }
 
 export interface FormField {
@@ -116,6 +117,7 @@ const sections = computed<Section[]>(() => {
     const page = pages.get(pageSlug)!
     const params: any[] = get.parameters ?? []
     const paginated = params.some((p: any) => p.name === 'page' && p.in === 'query')
+    const searchable = params.some((p: any) => p.name === 'search' && p.in === 'query')
 
     const endpoint: EndpointInfo = {
       path,
@@ -126,6 +128,7 @@ const sections = computed<Section[]>(() => {
       description: get.description,
       tag,
       paginated,
+      searchable,
     }
 
     if (type === 'stat') page.stats.push(endpoint)

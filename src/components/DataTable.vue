@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, reactive } from 'vue'
+import { ref, computed, watch, onMounted, reactive, onUnmounted } from 'vue'
 import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogClose,
 } from 'reka-ui'
-import { EllipsisVertical, ChevronLeft, ChevronRight, File } from '@lucide/vue'
+import { EllipsisVertical, ChevronLeft, ChevronRight, File, Search } from '@lucide/vue'
 
 interface Action {
   color: string
@@ -43,6 +43,8 @@ const errorMessage = ref<string | null>(null)
 const page = ref(0)
 const perPage = ref(10)
 const isLastPage = ref(false)
+const search = ref('')
+let searchDebounce: ReturnType<typeof setTimeout> | null = null
 
 const settingsOpen = ref(false)
 const perPageDraft = ref(10)
@@ -74,8 +76,15 @@ async function loadPage(p: number) {
   isLoading.value = true
   hasError.value = false
   try {
-    const params = props.endpoint.paginated ? { page: p, per_page: perPage.value } : undefined
-    const data = await fetchEndpoint(props.endpoint.path, params)
+    const params: Record<string, string | number> = {}
+    if (props.endpoint.paginated) {
+      params.page = p
+      params.per_page = perPage.value
+    }
+    if (props.endpoint.searchable && search.value.trim()) {
+      params.search = search.value.trim()
+    }
+    const data = await fetchEndpoint(props.endpoint.path, Object.keys(params).length ? params : undefined)
     rows.value = data.data ?? []
     if (props.endpoint.paginated) {
       isLastPage.value = rows.value.length < perPage.value
@@ -91,6 +100,16 @@ async function loadPage(p: number) {
 
 onMounted(() => loadPage(0))
 watch(() => props.refreshToken, (v, prev) => { if (v !== prev) loadPage(page.value) })
+
+watch(search, () => {
+  if (searchDebounce) clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(() => {
+    page.value = 0
+    loadPage(0)
+  }, 300)
+})
+
+onUnmounted(() => { if (searchDebounce) clearTimeout(searchDebounce) })
 
 function prevPage() {
   if (page.value > 0) {
@@ -185,6 +204,16 @@ async function runAction(action: Action, rowKey: string) {
 
 <template>
   <div class="rounded-lg border overflow-hidden transition-colors" :class="hasError ? 'border-destructive/40 bg-destructive/5' : 'border-border bg-card'">
+    <div v-if="endpoint.searchable" class="px-3 py-2 border-b border-border bg-muted/30">
+      <div class="relative">
+        <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+        <Input
+          v-model="search"
+          placeholder="Search…"
+          class="h-8 pl-8 text-sm"
+        />
+      </div>
+    </div>
     <Table>
       <TableHeader>
         <TableRow class="border-border bg-muted hover:bg-muted">
