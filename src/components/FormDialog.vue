@@ -10,6 +10,13 @@ import {
 } from 'reka-ui'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Plus } from '@lucide/vue'
 import type { FormEndpointInfo } from '@/composables/useOpenApi'
 
@@ -111,14 +118,20 @@ async function submit() {
             </button>
 
             <!-- Enum select -->
-            <select
+            <Select
               v-else-if="field.enum?.length"
-              :value="String(formData[field.name] ?? '')"
-              class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] transition-[color,box-shadow]"
-              @change="setField(field.name, ($event.target as HTMLSelectElement).value)"
+              :model-value="String(formData[field.name] ?? '')"
+              @update:model-value="setField(field.name, $event)"
             >
-              <option v-for="opt in field.enum" :key="opt" :value="opt">{{ opt }}</option>
-            </select>
+              <SelectTrigger class="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="opt in field.enum" :key="opt" :value="opt">
+                  {{ opt }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
 
             <!-- Text / number input -->
             <Input
