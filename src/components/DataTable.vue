@@ -16,6 +16,7 @@ import {
   DropdownMenuPortal,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DialogRoot,
   DialogPortal,
   DialogOverlay,
@@ -23,7 +24,7 @@ import {
   DialogTitle,
   DialogClose,
 } from 'reka-ui'
-import { EllipsisVertical, ChevronLeft, ChevronRight, File, Search } from '@lucide/vue'
+import { EllipsisVertical, ChevronLeft, ChevronRight, File, Search, Columns2, Check } from '@lucide/vue'
 
 interface Action {
   color: string
@@ -62,9 +63,22 @@ function applySettings() {
   loadPage(0)
 }
 
-const dataHeaders = computed(() =>
+const allHeaders = computed(() =>
   rows.value.length ? Object.keys(rows.value[0]).filter(k => k !== '__actions__') : []
 )
+
+const hiddenColumns = ref<Set<string>>(new Set())
+
+const dataHeaders = computed(() =>
+  allHeaders.value.filter(h => !hiddenColumns.value.has(h))
+)
+
+function toggleColumn(key: string) {
+  const next = new Set(hiddenColumns.value)
+  if (next.has(key)) next.delete(key)
+  else next.add(key)
+  hiddenColumns.value = next
+}
 
 const hasActions = computed(() =>
   rows.value.some(r => Array.isArray(r.__actions__) && (r.__actions__ as Action[]).length > 0)
@@ -204,8 +218,11 @@ async function runAction(action: Action, rowKey: string) {
 
 <template>
   <div class="rounded-lg border overflow-hidden transition-colors" :class="hasError ? 'border-destructive/40 bg-destructive/5' : 'border-border bg-card'">
-    <div v-if="endpoint.searchable" class="px-3 py-2 border-b border-border bg-muted/30">
-      <div class="relative">
+    <div
+      v-if="endpoint.searchable || (!isFirstLoad && !hasError && allHeaders.length > 1)"
+      class="px-3 py-2 border-b border-border bg-muted/30 flex items-center gap-2"
+    >
+      <div v-if="endpoint.searchable" class="relative flex-1 min-w-0">
         <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
         <Input
           v-model="search"
@@ -213,6 +230,34 @@ async function runAction(action: Action, rowKey: string) {
           class="h-8 pl-8 text-sm"
         />
       </div>
+
+      <DropdownMenuRoot v-if="!isFirstLoad && !hasError && allHeaders.length > 1">
+        <DropdownMenuTrigger
+          class="ml-auto inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus-visible:ring-1 focus-visible:ring-ring shrink-0"
+        >
+          <Columns2 class="w-4 h-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuPortal>
+          <DropdownMenuContent
+            align="end"
+            :side-offset="4"
+            class="z-50 min-w-[160px] overflow-hidden rounded-md border border-border bg-popover p-1 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+          >
+            <div class="px-2 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Columns</div>
+            <DropdownMenuSeparator class="my-1 -mx-1 h-px bg-border" />
+            <DropdownMenuItem
+              v-for="h in allHeaders"
+              :key="h"
+              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors text-foreground data-[highlighted]:bg-accent gap-2"
+              @select="(e) => { e.preventDefault(); toggleColumn(h) }"
+            >
+              <Check v-if="!hiddenColumns.has(h)" class="size-3.5 shrink-0" />
+              <span v-else class="size-3.5 shrink-0" />
+              {{ formatHeader(h) }}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenuPortal>
+      </DropdownMenuRoot>
     </div>
     <Table>
       <TableHeader>
