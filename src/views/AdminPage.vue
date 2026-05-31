@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
@@ -15,6 +15,7 @@ const { getPage, loading } = useOpenApi()
 
 const pageSlug = computed(() => route.params.pageSlug as string)
 const page = computed(() => getPage(pageSlug.value))
+const refreshToken = ref(0)
 </script>
 
 <template>
@@ -31,6 +32,7 @@ const page = computed(() => getPage(pageSlug.value))
           v-for="form in page.forms"
           :key="form.path"
           :form="form"
+          @submitted="refreshToken++"
         />
       </div>
     </header>
@@ -71,6 +73,7 @@ const page = computed(() => getPage(pageSlug.value))
             v-for="stat in page.stats"
             :key="stat.path"
             :endpoint="stat"
+            :refresh-token="refreshToken"
           />
         </div>
 
@@ -81,7 +84,7 @@ const page = computed(() => getPage(pageSlug.value))
             <h2 class="text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground font-mono mb-3">
               {{ page.tables[0].summary }}
             </h2>
-            <DataTable :endpoint="page.tables[0]" />
+            <DataTable :endpoint="page.tables[0]" :refresh-token="refreshToken" />
           </template>
 
           <!-- Multiple tables — tabbed -->
@@ -103,7 +106,7 @@ const page = computed(() => getPage(pageSlug.value))
               :key="table.itemSlug"
               :value="table.itemSlug"
             >
-              <DataTable :endpoint="table" />
+              <DataTable :endpoint="table" :refresh-token="refreshToken" />
             </TabsContent>
           </Tabs>
         </div>

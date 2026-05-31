@@ -21,6 +21,7 @@ import { Plus } from '@lucide/vue'
 import type { FormEndpointInfo } from '@/composables/useOpenApi'
 
 const props = defineProps<{ form: FormEndpointInfo }>()
+const emit = defineEmits<{ submitted: [] }>()
 
 const open = ref(false)
 const isSubmitting = ref(false)
@@ -72,6 +73,7 @@ async function submit() {
       throw new Error(detail ?? `HTTP ${res.status}`)
     }
     submitSuccess.value = true
+    emit('submitted')
     setTimeout(() => { open.value = false }, 900)
   } catch (e) {
     submitError.value = e instanceof Error ? e.message : 'Request failed'

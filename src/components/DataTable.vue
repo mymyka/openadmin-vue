@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, watch, onMounted, reactive } from 'vue'
 import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
@@ -32,7 +32,7 @@ interface Action {
   body?: Record<string, unknown> | null
 }
 
-const props = defineProps<{ endpoint: EndpointInfo }>()
+const props = defineProps<{ endpoint: EndpointInfo; refreshToken?: number }>()
 
 const { fetchEndpoint } = useOpenApi()
 const rows = ref<Record<string, unknown>[]>([])
@@ -90,6 +90,7 @@ async function loadPage(p: number) {
 }
 
 onMounted(() => loadPage(0))
+watch(() => props.refreshToken, (v, prev) => { if (v !== prev) loadPage(page.value) })
 
 function prevPage() {
   if (page.value > 0) {

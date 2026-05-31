@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOpenApi } from '@/composables/useOpenApi'
 import type { EndpointInfo } from '@/composables/useOpenApi'
 
-const props = defineProps<{ endpoint: EndpointInfo }>()
+const props = defineProps<{ endpoint: EndpointInfo; refreshToken?: number }>()
 
 const { fetchEndpoint } = useOpenApi()
 const value = ref<string | number | boolean | null>(null)
 const isLoading = ref(true)
+const isFirstLoad = ref(true)
 const hasError = ref(false)
 const errorMessage = ref<string | null>(null)
 
-onMounted(async () => {
+async function load() {
+  isLoading.value = true
+  hasError.value = false
   try {
     const data = await fetchEndpoint(props.endpoint.path)
     value.value = data.value ?? null
@@ -21,8 +24,12 @@ onMounted(async () => {
     errorMessage.value = e instanceof Error ? e.message : null
   } finally {
     isLoading.value = false
+    isFirstLoad.value = false
   }
-})
+}
+
+onMounted(load)
+watch(() => props.refreshToken, (v, prev) => { if (v !== prev) load() })
 
 function displayValue(v: string | number | boolean | null): string {
   if (v === null) return '—'
@@ -37,10 +44,11 @@ function displayValue(v: string | number | boolean | null): string {
       {{ endpoint.summary }}
     </p>
     <div>
-      <Skeleton v-if="isLoading" class="h-9 w-28 bg-muted" />
+      <Skeleton v-if="isLoading && isFirstLoad" class="h-9 w-28 bg-muted" />
       <p
         v-else-if="!hasError"
-        class="text-[2rem] font-normal leading-none tracking-tight text-foreground font-mono"
+        class="text-[2rem] font-normal leading-none tracking-tight text-foreground font-mono transition-opacity duration-200"
+        :class="isLoading ? 'opacity-40' : 'opacity-100'"
       >
         {{ displayValue(value) }}
       </p>
