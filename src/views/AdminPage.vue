@@ -8,6 +8,7 @@ import StatCard from '@/components/StatCard.vue'
 import DataTable from '@/components/DataTable.vue'
 import MarkdownBlock from '@/components/MarkdownBlock.vue'
 import FormDialog from '@/components/FormDialog.vue'
+import AreaChartCard from '@/components/AreaChartCard.vue'
 import { useOpenApi } from '@/composables/useOpenApi'
 
 const route = useRoute()
@@ -74,6 +75,23 @@ const refreshToken = ref(0)
             :key="stat.path"
             :endpoint="stat"
             :refresh-token="refreshToken"
+          />
+        </div>
+
+        <!-- Area charts -->
+        <div
+          v-if="page.areaCharts.length"
+          class="grid gap-4"
+          :class="{
+            'grid-cols-1 lg:grid-cols-3': page.areaCharts.length >= 3,
+            'grid-cols-1 sm:grid-cols-2': page.areaCharts.length === 2,
+            'grid-cols-1': page.areaCharts.length === 1,
+          }"
+        >
+          <AreaChartCard
+            v-for="chart in page.areaCharts"
+            :key="chart.path"
+            :endpoint="chart"
           />
         </div>
 

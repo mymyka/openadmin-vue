@@ -78,6 +78,13 @@
   --input: #3d3a39;
   --ring: #00d992;
 
+  /* Chart palette */
+  --chart-1: 161 100% 43%;
+  --chart-2: 250 80% 65%;
+  --chart-3: 28 95% 58%;
+  --chart-4: 217 90% 60%;
+  --chart-5: 349 90% 62%;
+
   /* Sidebar — same dark canvas */
   --sidebar: #101010;
   --sidebar-foreground: #bdbdbd;
