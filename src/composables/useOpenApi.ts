@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 export interface EndpointInfo {
   path: string
   pageSlug: string
-  type: 'stat' | 'table' | 'markdown' | 'area-chart'
+  type: 'stat' | 'table' | 'markdown' | 'area-chart' | 'bar-chart' | 'line-chart' | 'pie-chart'
   itemSlug: string
   summary: string
   description?: string
@@ -38,6 +38,9 @@ export interface Page {
   tables: EndpointInfo[]
   markdowns: EndpointInfo[]
   areaCharts: EndpointInfo[]
+  barCharts: EndpointInfo[]
+  lineCharts: EndpointInfo[]
+  pieCharts: EndpointInfo[]
   forms: FormEndpointInfo[]
 }
 
@@ -98,7 +101,7 @@ const sections = computed<Section[]>(() => {
     if (parts.length < 3) continue
 
     const [pageSlug, type, itemSlug] = parts
-    if (!['stat', 'table', 'markdown', 'area-chart'].includes(type)) continue
+    if (!['stat', 'table', 'markdown', 'area-chart', 'bar-chart', 'line-chart', 'pie-chart'].includes(type)) continue
 
     const tag: string | undefined = get.tags?.[0] || undefined
 
@@ -112,6 +115,9 @@ const sections = computed<Section[]>(() => {
         tables: [],
         markdowns: [],
         areaCharts: [],
+        barCharts: [],
+        lineCharts: [],
+        pieCharts: [],
         forms: [],
       })
     }
@@ -136,6 +142,9 @@ const sections = computed<Section[]>(() => {
     if (type === 'stat') page.stats.push(endpoint)
     else if (type === 'table') page.tables.push(endpoint)
     else if (type === 'area-chart') page.areaCharts.push(endpoint)
+    else if (type === 'bar-chart') page.barCharts.push(endpoint)
+    else if (type === 'line-chart') page.lineCharts.push(endpoint)
+    else if (type === 'pie-chart') page.pieCharts.push(endpoint)
     else page.markdowns.push(endpoint)
   }
 
@@ -190,6 +199,9 @@ const sections = computed<Section[]>(() => {
         tables: [],
         markdowns: [],
         areaCharts: [],
+        barCharts: [],
+        lineCharts: [],
+        pieCharts: [],
         forms: [],
       })
     }

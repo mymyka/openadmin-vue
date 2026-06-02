@@ -9,6 +9,9 @@ import DataTable from '@/components/DataTable.vue'
 import MarkdownBlock from '@/components/MarkdownBlock.vue'
 import FormDialog from '@/components/FormDialog.vue'
 import AreaChartCard from '@/components/AreaChartCard.vue'
+import BarChartCard from '@/components/BarChartCard.vue'
+import LineChartCard from '@/components/LineChartCard.vue'
+import PieChartCard from '@/components/PieChartCard.vue'
 import { useOpenApi } from '@/composables/useOpenApi'
 
 const route = useRoute()
@@ -90,6 +93,57 @@ const refreshToken = ref(0)
         >
           <AreaChartCard
             v-for="chart in page.areaCharts"
+            :key="chart.path"
+            :endpoint="chart"
+          />
+        </div>
+
+        <!-- Line charts -->
+        <div
+          v-if="page.lineCharts.length"
+          class="grid gap-4"
+          :class="{
+            'grid-cols-1 lg:grid-cols-3': page.lineCharts.length >= 3,
+            'grid-cols-1 sm:grid-cols-2': page.lineCharts.length === 2,
+            'grid-cols-1': page.lineCharts.length === 1,
+          }"
+        >
+          <LineChartCard
+            v-for="chart in page.lineCharts"
+            :key="chart.path"
+            :endpoint="chart"
+          />
+        </div>
+
+        <!-- Bar charts -->
+        <div
+          v-if="page.barCharts.length"
+          class="grid gap-4"
+          :class="{
+            'grid-cols-1 lg:grid-cols-3': page.barCharts.length >= 3,
+            'grid-cols-1 sm:grid-cols-2': page.barCharts.length === 2,
+            'grid-cols-1': page.barCharts.length === 1,
+          }"
+        >
+          <BarChartCard
+            v-for="chart in page.barCharts"
+            :key="chart.path"
+            :endpoint="chart"
+          />
+        </div>
+
+        <!-- Pie charts -->
+        <div
+          v-if="page.pieCharts.length"
+          class="grid gap-4"
+          :class="{
+            'grid-cols-1 lg:grid-cols-3': page.pieCharts.length >= 3,
+            'grid-cols-1 sm:grid-cols-2': page.pieCharts.length === 2,
+            'grid-cols-1': page.pieCharts.length === 1,
+          }"
+        >
+          <PieChartCard
+            v-for="chart in page.pieCharts"
             :key="chart.path"
             :endpoint="chart"
           />
