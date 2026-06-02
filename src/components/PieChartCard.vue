@@ -122,7 +122,7 @@ const legendItems = computed(() => {
               <VisDonut
                 :value="valueAccessor"
                 :color="colorAccessor"
-                :arc-width="0"
+                :arc-width="55"
                 :pad-angle="0.015"
                 :corner-radius="2"
                 :show-background="false"
