@@ -10,6 +10,7 @@ export interface EndpointInfo {
   tag?: string
   paginated?: boolean
   searchable?: boolean
+  sortColumns?: string[]
 }
 
 export interface FormField {
@@ -126,6 +127,14 @@ const sections = computed<Section[]>(() => {
     const params: any[] = get.parameters ?? []
     const paginated = params.some((p: any) => p.name === 'page' && p.in === 'query')
     const searchable = params.some((p: any) => p.name === 'search' && p.in === 'query')
+    const RESERVED = new Set(['page', 'per_page', 'search', 'ordered_sort'])
+    const sortColumns = params
+      .filter((p: any) => {
+        if (p.in !== 'query' || RESERVED.has(p.name)) return false
+        const anyOf: any[] = p.schema?.anyOf ?? []
+        return anyOf.some((opt: any) => Array.isArray(opt.enum) && opt.enum.includes('asc') && opt.enum.includes('desc'))
+      })
+      .map((p: any) => p.name as string)
 
     const endpoint: EndpointInfo = {
       path,
@@ -137,6 +146,7 @@ const sections = computed<Section[]>(() => {
       tag,
       paginated,
       searchable,
+      ...(sortColumns.length ? { sortColumns } : {}),
     }
 
     if (type === 'stat') page.stats.push(endpoint)

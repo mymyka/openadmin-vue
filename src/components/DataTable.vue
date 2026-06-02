@@ -24,7 +24,7 @@ import {
   DialogTitle,
   DialogClose,
 } from 'reka-ui'
-import { EllipsisVertical, ChevronLeft, ChevronRight, File, Search, Columns2, Check } from '@lucide/vue'
+import { EllipsisVertical, ChevronLeft, ChevronRight, File, Search, Columns2, Check, ArrowUp, ArrowDown, ChevronsUpDown } from '@lucide/vue'
 
 interface Action {
   color: string
@@ -46,6 +46,8 @@ const perPage = ref(10)
 const isLastPage = ref(false)
 const search = ref('')
 let searchDebounce: ReturnType<typeof setTimeout> | null = null
+const sortColumn = ref<string | null>(null)
+const sortDirection = ref<'asc' | 'desc'>('asc')
 
 const settingsOpen = ref(false)
 const perPageDraft = ref(10)
@@ -86,6 +88,19 @@ const hasActions = computed(() =>
 
 const totalCols = computed(() => dataHeaders.value.length + (hasActions.value ? 1 : 0))
 
+function toggleSort(col: string) {
+  if (sortColumn.value !== col) {
+    sortColumn.value = col
+    sortDirection.value = 'asc'
+  } else if (sortDirection.value === 'asc') {
+    sortDirection.value = 'desc'
+  } else {
+    sortColumn.value = null
+  }
+  page.value = 0
+  loadPage(0)
+}
+
 async function loadPage(p: number) {
   isLoading.value = true
   hasError.value = false
@@ -97,6 +112,10 @@ async function loadPage(p: number) {
     }
     if (props.endpoint.searchable && search.value.trim()) {
       params.search = search.value.trim()
+    }
+    if (props.endpoint.sortColumns?.length) {
+      params.ordered_sort = sortColumn.value ? JSON.stringify([sortColumn.value]) : '[]'
+      if (sortColumn.value) params[sortColumn.value] = sortDirection.value
     }
     const data = await fetchEndpoint(props.endpoint.path, Object.keys(params).length ? params : undefined)
     rows.value = data.data ?? []
@@ -271,9 +290,20 @@ async function runAction(action: Action, rowKey: string) {
             <TableHead
               v-for="h in dataHeaders"
               :key="h"
-              class="text-[11px] font-semibold tracking-[0.1em] uppercase text-muted-foreground py-3 font-mono"
+              :class="[
+                'text-[11px] font-semibold tracking-[0.1em] uppercase text-muted-foreground py-3 font-mono',
+                endpoint.sortColumns?.includes(h) ? 'cursor-pointer select-none hover:text-foreground transition-colors' : '',
+              ]"
+              @click="endpoint.sortColumns?.includes(h) ? toggleSort(h) : undefined"
             >
-              {{ formatHeader(h) }}
+              <span class="inline-flex items-center gap-1">
+                {{ formatHeader(h) }}
+                <template v-if="endpoint.sortColumns?.includes(h)">
+                  <ArrowUp v-if="sortColumn === h && sortDirection === 'asc'" class="size-3 shrink-0" />
+                  <ArrowDown v-else-if="sortColumn === h && sortDirection === 'desc'" class="size-3 shrink-0" />
+                  <ChevronsUpDown v-else class="size-3 shrink-0 opacity-40" />
+                </template>
+              </span>
             </TableHead>
             <TableHead
               v-if="hasActions"
