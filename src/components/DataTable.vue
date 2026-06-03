@@ -384,7 +384,7 @@ async function runAction(action: Action, rowKey: string) {
               :key="h"
               draggable="true"
               :class="[
-                'relative text-[11px] font-semibold tracking-[0.1em] uppercase text-muted-foreground py-3 font-mono transition-colors',
+                'relative overflow-hidden text-[11px] font-semibold tracking-[0.1em] uppercase text-muted-foreground py-3 font-mono transition-colors',
                 endpoint.sortColumns?.includes(h) ? 'cursor-pointer select-none hover:text-foreground' : 'cursor-grab',
                 dragOverCol === h ? 'bg-primary/10 text-foreground' : '',
                 draggedCol === h ? 'opacity-40' : '',
@@ -396,9 +396,9 @@ async function runAction(action: Action, rowKey: string) {
               @dragend="onColDragEnd"
               @click="!resizeJustEnded && endpoint.sortColumns?.includes(h) ? toggleSort(h) : undefined"
             >
-              <span class="inline-flex items-center gap-1 pr-2">
+              <span class="flex items-center gap-1 pr-2 min-w-0">
                 <GripVertical class="size-3 shrink-0 opacity-25 cursor-grab" />
-                {{ formatHeader(h) }}
+                <span class="truncate">{{ formatHeader(h) }}</span>
                 <template v-if="endpoint.sortColumns?.includes(h)">
                   <ArrowUp v-if="sortColumn === h && sortDirection === 'asc'" class="size-3 shrink-0" />
                   <ArrowDown v-else-if="sortColumn === h && sortDirection === 'desc'" class="size-3 shrink-0" />
@@ -456,7 +456,7 @@ async function runAction(action: Action, rowKey: string) {
             <TableCell
               v-for="h in dataHeaders"
               :key="h"
-              class="py-3 text-sm text-foreground"
+              class="py-3 text-sm text-foreground overflow-hidden"
             >
               <template v-if="getCellType(row[h]) === 'image'">
                 <Avatar class="size-8">
@@ -479,7 +479,7 @@ async function runAction(action: Action, rowKey: string) {
                 class="size-8 rounded-full bg-muted-foreground/20"
               />
               <template v-else>
-                {{ formatCell(row[h]) }}
+                <span class="block truncate">{{ formatCell(row[h]) }}</span>
               </template>
             </TableCell>
 
