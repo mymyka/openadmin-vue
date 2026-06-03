@@ -98,19 +98,21 @@ function onColDragStart(h: string) {
 
 function onColDragOver(e: DragEvent, h: string) {
   e.preventDefault()
-  if (draggedCol.value && draggedCol.value !== h) dragOverCol.value = h
+  if (!draggedCol.value) return
+  dragOverCol.value = draggedCol.value !== h ? h : null
 }
 
 function onColDrop(h: string) {
-  if (!draggedCol.value || draggedCol.value === h) return
+  dragOverCol.value = null
+  const dragged = draggedCol.value
+  draggedCol.value = null
+  if (!dragged || dragged === h) return
   const order = [...columnOrder.value]
-  const from = order.indexOf(draggedCol.value)
+  const from = order.indexOf(dragged)
   const to = order.indexOf(h)
   order.splice(from, 1)
-  order.splice(to, 0, draggedCol.value)
+  order.splice(to, 0, dragged)
   columnOrder.value = order
-  draggedCol.value = null
-  dragOverCol.value = null
 }
 
 function onColDragEnd() {
