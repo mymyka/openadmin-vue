@@ -180,7 +180,11 @@ watch(search, () => {
   }, 300)
 })
 
-onUnmounted(() => { if (searchDebounce) clearTimeout(searchDebounce) })
+onUnmounted(() => {
+  if (searchDebounce) clearTimeout(searchDebounce)
+  window.removeEventListener('mousemove', onResizeMouseMove)
+  window.removeEventListener('mouseup', onResizeMouseUp)
+})
 
 function prevPage() {
   if (page.value > 0) {
@@ -250,6 +254,56 @@ function actionItemClass(color: string): string {
   return 'text-foreground data-[highlighted]:bg-accent'
 }
 
+const columnWidths = ref<Record<string, number>>({})
+const isResizing = ref(false)
+let resizingCol = ''
+let resizeStartX = 0
+let resizeStartWidth = 0
+let resizeHasMoved = false
+let resizeJustEnded = false
+
+function onResizeMouseDown(e: MouseEvent, h: string) {
+  e.preventDefault()
+  e.stopPropagation()
+  const th = (e.currentTarget as HTMLElement).closest('th')
+  if (!th) return
+  if (Object.keys(columnWidths.value).length === 0) {
+    const ths = Array.from(th.closest('tr')?.querySelectorAll('th') ?? [])
+    const widths: Record<string, number> = {}
+    dataHeaders.value.forEach((header, i) => { widths[header] = ths[i]?.offsetWidth ?? 100 })
+    columnWidths.value = widths
+  }
+  resizingCol = h
+  isResizing.value = true
+  resizeHasMoved = false
+  resizeStartX = e.clientX
+  resizeStartWidth = columnWidths.value[h] ?? th.offsetWidth
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+  window.addEventListener('mousemove', onResizeMouseMove)
+  window.addEventListener('mouseup', onResizeMouseUp)
+}
+
+function onResizeMouseMove(e: MouseEvent) {
+  if (!isResizing.value) return
+  resizeHasMoved = true
+  const newWidth = Math.max(40, resizeStartWidth + (e.clientX - resizeStartX))
+  columnWidths.value = { ...columnWidths.value, [resizingCol]: newWidth }
+}
+
+function onResizeMouseUp() {
+  isResizing.value = false
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+  window.removeEventListener('mousemove', onResizeMouseMove)
+  window.removeEventListener('mouseup', onResizeMouseUp)
+  if (resizeHasMoved) {
+    resizeJustEnded = true
+    setTimeout(() => { resizeJustEnded = false }, 0)
+  }
+  resizeHasMoved = false
+}
+
 const loadingRow = ref<string | null>(null)
 
 async function runAction(action: Action, rowKey: string) {
@@ -316,7 +370,7 @@ async function runAction(action: Action, rowKey: string) {
         </DropdownMenuPortal>
       </DropdownMenuRoot>
     </div>
-    <Table>
+    <Table :class="Object.keys(columnWidths).length > 0 ? 'table-fixed' : ''">
       <TableHeader>
         <TableRow class="border-border bg-muted hover:bg-muted">
           <template v-if="isLoading && isFirstLoad">
@@ -330,18 +384,19 @@ async function runAction(action: Action, rowKey: string) {
               :key="h"
               draggable="true"
               :class="[
-                'text-[11px] font-semibold tracking-[0.1em] uppercase text-muted-foreground py-3 font-mono transition-colors',
+                'relative text-[11px] font-semibold tracking-[0.1em] uppercase text-muted-foreground py-3 font-mono transition-colors',
                 endpoint.sortColumns?.includes(h) ? 'cursor-pointer select-none hover:text-foreground' : 'cursor-grab',
                 dragOverCol === h ? 'bg-primary/10 text-foreground' : '',
                 draggedCol === h ? 'opacity-40' : '',
               ]"
+              :style="columnWidths[h] ? { width: columnWidths[h] + 'px' } : {}"
               @dragstart="onColDragStart(h)"
               @dragover="onColDragOver($event, h)"
               @drop="onColDrop(h)"
               @dragend="onColDragEnd"
-              @click="endpoint.sortColumns?.includes(h) ? toggleSort(h) : undefined"
+              @click="!resizeJustEnded && endpoint.sortColumns?.includes(h) ? toggleSort(h) : undefined"
             >
-              <span class="inline-flex items-center gap-1">
+              <span class="inline-flex items-center gap-1 pr-2">
                 <GripVertical class="size-3 shrink-0 opacity-25 cursor-grab" />
                 {{ formatHeader(h) }}
                 <template v-if="endpoint.sortColumns?.includes(h)">
@@ -350,6 +405,15 @@ async function runAction(action: Action, rowKey: string) {
                   <ChevronsUpDown v-else class="size-3 shrink-0 opacity-40" />
                 </template>
               </span>
+              <div
+                class="absolute right-0 top-0 h-full w-2 cursor-col-resize flex items-center justify-center group"
+                draggable="false"
+                @mousedown="onResizeMouseDown($event, h)"
+                @click.stop
+                @dragstart.prevent.stop
+              >
+                <div class="h-4 w-px bg-border group-hover:bg-primary/60 transition-colors" />
+              </div>
             </TableHead>
             <TableHead
               v-if="hasActions"
