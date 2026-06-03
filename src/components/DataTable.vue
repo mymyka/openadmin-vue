@@ -24,7 +24,7 @@ import {
   DialogTitle,
   DialogClose,
 } from 'reka-ui'
-import { EllipsisVertical, ChevronLeft, ChevronRight, File, Search, Columns2, Check, ArrowUp, ArrowDown, ChevronsUpDown } from '@lucide/vue'
+import { EllipsisVertical, ChevronLeft, ChevronRight, File, Search, Columns2, Check, ArrowUp, ArrowDown, ChevronsUpDown, GripVertical } from '@lucide/vue'
 
 interface Action {
   color: string
@@ -70,9 +70,16 @@ const allHeaders = computed(() =>
 )
 
 const hiddenColumns = ref<Set<string>>(new Set())
+const columnOrder = ref<string[]>([])
+
+watch(allHeaders, (headers) => {
+  const kept = columnOrder.value.filter(h => headers.includes(h))
+  const added = headers.filter(h => !columnOrder.value.includes(h))
+  columnOrder.value = [...kept, ...added]
+}, { immediate: true })
 
 const dataHeaders = computed(() =>
-  allHeaders.value.filter(h => !hiddenColumns.value.has(h))
+  columnOrder.value.filter(h => !hiddenColumns.value.has(h))
 )
 
 function toggleColumn(key: string) {
@@ -80,6 +87,35 @@ function toggleColumn(key: string) {
   if (next.has(key)) next.delete(key)
   else next.add(key)
   hiddenColumns.value = next
+}
+
+const draggedCol = ref<string | null>(null)
+const dragOverCol = ref<string | null>(null)
+
+function onColDragStart(h: string) {
+  draggedCol.value = h
+}
+
+function onColDragOver(e: DragEvent, h: string) {
+  e.preventDefault()
+  if (draggedCol.value && draggedCol.value !== h) dragOverCol.value = h
+}
+
+function onColDrop(h: string) {
+  if (!draggedCol.value || draggedCol.value === h) return
+  const order = [...columnOrder.value]
+  const from = order.indexOf(draggedCol.value)
+  const to = order.indexOf(h)
+  order.splice(from, 1)
+  order.splice(to, 0, draggedCol.value)
+  columnOrder.value = order
+  draggedCol.value = null
+  dragOverCol.value = null
+}
+
+function onColDragEnd() {
+  draggedCol.value = null
+  dragOverCol.value = null
 }
 
 const hasActions = computed(() =>
@@ -290,13 +326,21 @@ async function runAction(action: Action, rowKey: string) {
             <TableHead
               v-for="h in dataHeaders"
               :key="h"
+              draggable="true"
               :class="[
-                'text-[11px] font-semibold tracking-[0.1em] uppercase text-muted-foreground py-3 font-mono',
-                endpoint.sortColumns?.includes(h) ? 'cursor-pointer select-none hover:text-foreground transition-colors' : '',
+                'text-[11px] font-semibold tracking-[0.1em] uppercase text-muted-foreground py-3 font-mono transition-colors',
+                endpoint.sortColumns?.includes(h) ? 'cursor-pointer select-none hover:text-foreground' : 'cursor-grab',
+                dragOverCol === h ? 'bg-primary/10 text-foreground' : '',
+                draggedCol === h ? 'opacity-40' : '',
               ]"
+              @dragstart="onColDragStart(h)"
+              @dragover="onColDragOver($event, h)"
+              @drop="onColDrop(h)"
+              @dragend="onColDragEnd"
               @click="endpoint.sortColumns?.includes(h) ? toggleSort(h) : undefined"
             >
               <span class="inline-flex items-center gap-1">
+                <GripVertical class="size-3 shrink-0 opacity-25 cursor-grab" />
                 {{ formatHeader(h) }}
                 <template v-if="endpoint.sortColumns?.includes(h)">
                   <ArrowUp v-if="sortColumn === h && sortDirection === 'asc'" class="size-3 shrink-0" />
