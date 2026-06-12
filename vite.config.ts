@@ -13,7 +13,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/admin": {
-        target: "https://openadmin-py.onrender.com",
+        target: "http://0.0.0.0:8000",
         changeOrigin: true,
       },
     },
